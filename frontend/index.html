@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VeritasAI | Fake News Detection System</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Background Glow Effects -->
+  <div class="glow-orb glow-top"></div>
+  <div class="glow-orb glow-bottom"></div>
+
+  <!-- Header & Navigation -->
+  <header class="navbar">
+    <div class="nav-container">
+      <div class="brand">
+        <div class="brand-icon">
+          <i class="fa-solid fa-shield-halved"></i>
+        </div>
+        <div>
+          <h1 class="brand-title">Veritas<span>AI</span></h1>
+          <p class="brand-subtitle">Fake News Detection & Content Authenticity Engine</p>
+        </div>
+      </div>
+      
+      <div class="nav-actions">
+        <!-- Live Backend Health Indicator -->
+        <div id="backend-status-badge" class="status-badge checking">
+          <span class="pulse-dot"></span>
+          <span id="backend-status-text">Connecting to API...</span>
+        </div>
+        <button id="api-config-btn" class="icon-btn" title="Configure Backend API URL">
+          <i class="fa-solid fa-cloud"></i>
+          <span>API Server</span>
+        </button>
+        <button id="project-info-btn" class="icon-btn" title="Project Details & Model Specs">
+          <i class="fa-solid fa-circle-info"></i>
+          <span>Model Specs</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="main-container">
+    
+    <!-- Hero Section -->
+    <section class="hero-section">
+      <div class="hero-badge">
+        <i class="fa-solid fa-microchip"></i>
+        <span>LinearSVC + TF-IDF (100k Features) | Accuracy: 99.80%</span>
+      </div>
+      <h2 class="hero-title">Verify News Authenticity with Machine Learning</h2>
+      <p class="hero-desc">
+        Harnessing natural language processing and linear support vector classification trained on 44,689 validated news articles to detect media disinformation with high precision.
+      </p>
+    </section>
+
+    <!-- Error Alert Box -->
+    <div id="error-alert" class="alert-box alert-error hidden">
+      <i class="fa-solid fa-triangle-exclamation alert-icon"></i>
+      <div class="alert-content">
+        <h4 id="error-title">Submission Error</h4>
+        <p id="error-message">Please provide valid news text to analyze.</p>
+      </div>
+      <button class="alert-close-btn" id="error-close-btn">&times;</button>
+    </div>
+
+    <!-- Main Workspace Grid -->
+    <div class="workspace-grid">
+      
+      <!-- Input Card -->
+      <section class="card input-card">
+        <div class="card-header">
+          <div class="card-header-left">
+            <i class="fa-solid fa-newspaper card-header-icon"></i>
+            <div>
+              <h3 class="card-title">Article Input</h3>
+              <p class="card-subtitle">Paste article headline and body text below</p>
+            </div>
+          </div>
+          <!-- Quick Sample Loaders -->
+          <div class="sample-actions">
+            <span class="sample-label">Quick Tests:</span>
+            <button id="btn-sample-real" class="chip-btn chip-real" title="Load sample verified Reuters article">
+              <i class="fa-solid fa-circle-check"></i> Real Sample
+            </button>
+            <button id="btn-sample-fake" class="chip-btn chip-fake" title="Load sample sensationalist fake article">
+              <i class="fa-solid fa-circle-exclamation"></i> Fake Sample
+            </button>
+            <button id="btn-clear" class="chip-btn chip-clear" title="Clear input form">
+              <i class="fa-solid fa-rotate-left"></i> Clear
+            </button>
+          </div>
+        </div>
+
+        <form id="detection-form" class="detection-form">
+          <!-- Optional Title Field -->
+          <div class="form-group">
+            <label for="news-title" class="form-label">
+              <span>News Title / Headline</span>
+              <span class="optional-tag">Optional</span>
+            </label>
+            <input 
+              type="text" 
+              id="news-title" 
+              class="form-input" 
+              placeholder="e.g. White House announces bipartisan agreement..."
+              autocomplete="off"
+            >
+          </div>
+
+          <!-- Large Text Body Field -->
+          <div class="form-group">
+            <div class="form-label-row">
+              <label for="news-text" class="form-label">
+                <span>Article Body Text</span>
+                <span class="required-tag">*Required</span>
+              </label>
+              <div class="text-counters">
+                <span id="char-count">0 characters</span>
+                <span class="counter-divider">&bull;</span>
+                <span id="word-count">0 words</span>
+              </div>
+            </div>
+            <textarea 
+              id="news-text" 
+              class="form-textarea" 
+              rows="10" 
+              placeholder="Paste the full news article, editorial, or social media report here to verify its authenticity..."
+              required
+            ></textarea>
+          </div>
+
+          <!-- Submit Button -->
+          <div class="form-footer">
+            <button type="submit" id="btn-submit" class="btn-detect">
+              <span class="btn-content">
+                <i class="fa-solid fa-wand-magic-sparkles"></i>
+                <span id="btn-text">Detect Fake News</span>
+              </span>
+              <span class="btn-loader hidden" id="btn-loader">
+                <i class="fa-solid fa-spinner fa-spin"></i>
+                <span>Analyzing Article...</span>
+              </span>
+            </button>
+          </div>
+        </form>
+      </section>
+
+      <!-- Results & Analytics Card -->
+      <section class="card result-card" id="result-card">
+        
+        <!-- Placeholder State (Before Search) -->
+        <div id="state-placeholder" class="state-view placeholder-view">
+          <div class="placeholder-icon">
+            <i class="fa-solid fa-magnifying-glass-chart"></i>
+          </div>
+          <h3>Awaiting Input</h3>
+          <p>Paste an article into the text box and click <strong>"Detect Fake News"</strong> to see AI classification, confidence metrics, and linguistic decision scores.</p>
+          <div class="features-list">
+            <div class="feature-item">
+              <i class="fa-solid fa-bolt"></i>
+              <span>Sub-millisecond inference</span>
+            </div>
+            <div class="feature-item">
+              <i class="fa-solid fa-sliders"></i>
+              <span>Calibrated confidence estimation</span>
+            </div>
+            <div class="feature-item">
+              <i class="fa-solid fa-shield-virus"></i>
+              <span>Zero training-data leakage</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Loading State (During Prediction) -->
+        <div id="state-loading" class="state-view loading-view hidden">
+          <div class="radar-spinner">
+            <div class="radar-circle"></div>
+            <div class="radar-circle inner"></div>
+            <i class="fa-solid fa-brain scanner-icon"></i>
+          </div>
+          <h3>Analyzing Authenticity...</h3>
+          <p class="loading-subtext" id="loading-status-text">Vectorizing article with 100,000 TF-IDF n-grams...</p>
+          <div class="loading-progress-bar">
+            <div class="loading-progress-fill"></div>
+          </div>
+        </div>
+
+        <!-- Result State (After Prediction) -->
+        <div id="state-result" class="state-view result-view hidden">
+          
+          <!-- Classification Banner -->
+          <div id="prediction-badge" class="prediction-badge badge-real">
+            <div class="badge-icon-box">
+              <i id="prediction-icon" class="fa-solid fa-circle-check"></i>
+            </div>
+            <div class="badge-text-box">
+              <span class="badge-label">Prediction Result</span>
+              <h3 id="prediction-title" class="badge-title">REAL NEWS</h3>
+            </div>
+          </div>
+
+          <!-- Confidence Meter Section -->
+          <div class="metric-card">
+            <div class="metric-header">
+              <span class="metric-label">Model Confidence</span>
+              <span id="confidence-percentage" class="metric-value">91.81%</span>
+            </div>
+            <div class="confidence-bar-track">
+              <div id="confidence-bar-fill" class="confidence-bar-fill fill-real" style="width: 91.81%;"></div>
+            </div>
+            <div class="confidence-labels">
+              <span>Uncertain (50%)</span>
+              <span>High Certainty (100%)</span>
+            </div>
+          </div>
+
+          <!-- Metrics Detail Grid -->
+          <div class="metrics-grid">
+            <div class="metric-tile">
+              <span class="tile-label"><i class="fa-solid fa-calculator"></i> Decision Score</span>
+              <span id="decision-score-val" class="tile-value mono">+2.4173</span>
+              <span class="tile-caption">Distance to hyperplane</span>
+            </div>
+            <div class="metric-tile">
+              <span class="tile-label"><i class="fa-solid fa-diagram-project"></i> Model Type</span>
+              <span class="tile-value">LinearSVC</span>
+              <span class="tile-caption">Support Vector Classifier</span>
+            </div>
+            <div class="metric-tile">
+              <span class="tile-label"><i class="fa-solid fa-list-check"></i> Vocabulary</span>
+              <span class="tile-value mono">100,000</span>
+              <span class="tile-caption">TF-IDF unigrams & bigrams</span>
+            </div>
+            <div class="metric-tile">
+              <span class="tile-label"><i class="fa-solid fa-clock"></i> Inference</span>
+              <span id="inference-time-val" class="tile-value mono">~12ms</span>
+              <span class="tile-caption">End-to-end response time</span>
+            </div>
+          </div>
+
+          <!-- Explanation Box -->
+          <div class="explanation-box" id="explanation-box">
+            <div class="explanation-header">
+              <i class="fa-solid fa-lightbulb"></i>
+              <h4>Linguistic Analysis & Interpretation</h4>
+            </div>
+            <p id="explanation-text">
+              The model detected patterns, factual reporting syntax, and journalistic attribution typical of verified news coverage.
+            </p>
+          </div>
+
+          <!-- Analyze Another Button -->
+          <button id="btn-retest" class="btn-secondary">
+            <i class="fa-solid fa-arrows-rotate"></i> Analyze Another Article
+          </button>
+        </div>
+
+      </section>
+    </div>
+
+    <!-- Quick Stats Bar -->
+    <section class="stats-ribbon">
+      <div class="stat-item">
+        <div class="stat-number">44,689</div>
+        <div class="stat-text">De-duplicated Articles Analyzed</div>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat-item">
+        <div class="stat-number highlight-green">99.80%</div>
+        <div class="stat-text">LinearSVC Test Accuracy</div>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat-item">
+        <div class="stat-number highlight-blue">99.79%</div>
+        <div class="stat-text">Test-Set F1-Score</div>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat-item">
+        <div class="stat-number">100k</div>
+        <div class="stat-text">TF-IDF Sublinear Features</div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Modal: Project Specs & Architecture -->
+  <div id="specs-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title-row">
+          <i class="fa-solid fa-layer-group modal-icon"></i>
+          <h3>Machine Learning Architecture & Project Specs</h3>
+        </div>
+        <button id="modal-close-btn" class="modal-close-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="spec-section">
+          <h4><i class="fa-solid fa-database"></i> Dataset & Cleaning</h4>
+          <p>Evaluated on 44,898 raw news articles from <code>True.csv</code> and <code>Fake.csv</code>. Removed 209 exact duplicate entries before train/test splitting to prevent data contamination. Metadata features (subject, date) were strictly excluded to eliminate data leakage.</p>
+        </div>
+        <div class="spec-section">
+          <h4><i class="fa-solid fa-chart-line"></i> Model Benchmark Comparison</h4>
+          <table class="spec-table">
+            <thead>
+              <tr>
+                <th>Model Algorithm</th>
+                <th>Accuracy</th>
+                <th>Precision</th>
+                <th>Recall</th>
+                <th>F1-Score</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="selected-row">
+                <td><strong>LinearSVC (Selected)</strong></td>
+                <td>99.80%</td>
+                <td>99.72%</td>
+                <td>99.86%</td>
+                <td><strong>99.79%</strong></td>
+              </tr>
+              <tr>
+                <td>Logistic Regression</td>
+                <td>99.24%</td>
+                <td>98.90%</td>
+                <td>99.50%</td>
+                <td>99.20%</td>
+              </tr>
+              <tr>
+                <td>Multinomial Naive Bayes</td>
+                <td>96.05%</td>
+                <td>95.76%</td>
+                <td>95.92%</td>
+                <td>95.84%</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="spec-section">
+          <h4><i class="fa-solid fa-server"></i> Backend & Serving</h4>
+          <p>REST API built with <strong>FastAPI</strong> and served through <strong>Uvicorn</strong>. Features asynchronous lifespan artifact loading and mathematical Platt probability calibration of hyperplane distances.</p>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="modal-ok-btn" class="btn-primary-small">Close Specs</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: API Server Configuration -->
+  <div id="api-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title-row">
+          <i class="fa-solid fa-cloud modal-icon"></i>
+          <h3>Backend API Configuration</h3>
+        </div>
+        <button id="api-modal-close-btn" class="modal-close-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size: 0.88rem; color: var(--text-secondary); margin-bottom: 1rem;">
+          Connect this frontend to your deployed Render FastAPI Web Service, or switch back to local development.
+        </p>
+        <div class="form-group">
+          <label for="api-url-input" class="form-label">
+            <span>FastAPI Server URL</span>
+          </label>
+          <input 
+            type="url" 
+            id="api-url-input" 
+            class="form-input" 
+            placeholder="https://fake-news-backend.onrender.com"
+          >
+          <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.35rem;">
+            Default local: <code>http://127.0.0.1:8000</code> &bull; Render: <code>https://&lt;your-backend&gt;.onrender.com</code>
+          </p>
+        </div>
+      </div>
+      <div class="modal-footer" style="gap: 0.75rem;">
+        <button id="btn-reset-api" class="btn-secondary" style="width: auto; padding: 0.5rem 1rem;">Reset to Default</button>
+        <button id="btn-save-api" class="btn-primary-small">Save & Connect</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-container">
+      <p>&copy; 2026 VeritasAI &bull; Final Year Capstone Project &bull; Machine Learning & NLP Pipeline</p>
+      <div class="footer-links">
+        <a id="footer-link-docs" href="http://127.0.0.1:8000/docs" target="_blank" rel="noopener"><i class="fa-solid fa-code"></i> FastAPI Docs</a>
+        <a id="footer-link-health" href="http://127.0.0.1:8000/health" target="_blank" rel="noopener"><i class="fa-solid fa-heart-pulse"></i> Health Check</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Frontend JavaScript -->
+  <script src="app.js"></script>
+</body>
+</html>

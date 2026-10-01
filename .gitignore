@@ -1,0 +1,19 @@
+# Python bytecode & cache
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# Virtual environments
+.env
+venv/
+.venv/
+env/
+
+# Raw dataset files (116 MB, not needed for online inference)
+dataset/*.csv
+
+# Operating system files
+.DS_Store
+Thumbs.db
+desktop.ini
